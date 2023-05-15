@@ -100,6 +100,7 @@ class SegmentationDataModule(LightningDataModule):
 
 val_transforms = A.Compose(
     [
+        A.RandomCrop(width=224, height=224),
         A.Normalize(),
         ToTensorV2(),
     ]
