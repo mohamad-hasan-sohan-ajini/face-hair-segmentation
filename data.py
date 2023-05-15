@@ -2,9 +2,9 @@ from glob import glob
 from pathlib import Path
 from typing import Optional
 
+import albumentations as A
 import numpy as np
 from PIL import Image
-from albumentations import Compose, HorizontalFlip, VerticalFlip, Normalize
 from albumentations.pytorch import ToTensorV2
 from pytorch_lightning import LightningDataModule
 from torch import Tensor
@@ -16,7 +16,7 @@ class SegmentationDataset(Dataset):
             self,
             dataset_path_regex: str,
             labels_base_path: str,
-            transforms: Compose,
+            transforms: A.Compose,
     ) -> None:
         # primitives attributes
         self.labels_base_path = Path(labels_base_path)
@@ -59,8 +59,8 @@ class SegmentationDataModule(LightningDataModule):
             labels_base_path: str,
             batch_size: int,
             num_workers: int,
-            train_transforms: Compose,
-            val_transforms: Compose,
+            train_transforms: A.Compose,
+            val_transforms: A.Compose,
     ) -> None:
         super().__init__()
         self.dataset_path_regex = dataset_path_regex
@@ -97,31 +97,49 @@ class SegmentationDataModule(LightningDataModule):
             num_workers=self.num_workers,
         )
 
-train_transforms = Compose(
+
+val_transforms = A.Compose(
     [
-        HorizontalFlip(),
-        VerticalFlip(),
-        Normalize(),
+        A.Normalize(),
         ToTensorV2(),
     ]
 )
 
-val_transforms = Compose(
+train_transforms = A.Compose(
     [
-        Normalize(),
-        ToTensorV2(),
-    ]
+        # spatial
+        A.HorizontalFlip(p=.5),
+        A.VerticalFlip(p=.5),
+        A.Affine(p=.2),
+        A.Perspective(p=.2),
+        A.Rotate(p=1.0),
+        # pixel level
+        A.RandomBrightnessContrast(p=0.1),
+        A.AdvancedBlur(p=.1),
+        A.ChannelShuffle(p=.01),
+        A.MedianBlur(p=.01),
+        A.Posterize(p=.1),
+        A.Solarize(p=.1),
+        # data format
+        val_transforms,
+    ],
 )
 
-dm = SegmentationDataModule(
-    dataset_path_regex='data/lfw-funneled/lfw_funneled/*/*.jpg',
-    labels_base_path='data/parts_lfw_funneled_gt_images',
-    batch_size=32,
-    num_workers=8,
-    train_transforms=train_transforms,
-    val_transforms=val_transforms,
-)
-dm.setup('train')
-train_dl = dm.train_dataloader()
-for x, target in train_dl:
-    break
+
+if __name__ == '__main__':
+    dm = SegmentationDataModule(
+        dataset_path_regex='data/lfw-funneled/lfw_funneled/*/*.jpg',
+        labels_base_path='data/parts_lfw_funneled_gt_images',
+        batch_size=32,
+        num_workers=8,
+        train_transforms=train_transforms,
+        val_transforms=val_transforms,
+    )
+    dm.setup('train')
+    train_dl = dm.train_dataloader()
+    for x, target in train_dl:
+        break
+    # visualize results
+    from torchvision.utils import save_image
+    save_image(x, '/tmp/zinput.png')
+    save_image(target.float().permute(0, 3, 1, 2), '/tmp/ztarget.png')
