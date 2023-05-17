@@ -8,6 +8,7 @@ from torchvision.ops.focal_loss import sigmoid_focal_loss
 
 
 class UNet(LightningModule):
+    """UNet model borrowed from: https://github.com/mateuszbuda/brain-segmentation-pytorch"""
 
     def __init__(
             self,
