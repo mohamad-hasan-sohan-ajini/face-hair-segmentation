@@ -31,7 +31,7 @@ checkpoint_callback = ModelCheckpoint(
 # trainer and start training
 trainer = Trainer(
     devices=1,
-    max_epochs=10,
+    max_epochs=100,
     callbacks=[checkpoint_callback],
     # precision=16,
 )
