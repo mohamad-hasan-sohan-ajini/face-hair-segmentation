@@ -2,8 +2,8 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 from data import SegmentationDataModule, train_transforms, val_transforms
-from model import UNet
-# from model_ce import NNet
+from model_ce import UNet
+from model_fl import UNet
 
 # data module
 datamodule = SegmentationDataModule(
