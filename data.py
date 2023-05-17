@@ -136,7 +136,7 @@ if __name__ == '__main__':
         train_transforms=train_transforms,
         val_transforms=val_transforms,
     )
-    dm.setup('train')
+    dm.setup()
     train_dl = dm.train_dataloader()
     for x, target in train_dl:
         break
